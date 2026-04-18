@@ -24,7 +24,6 @@ jobs:
       
       - name: Fix Gradle compatibility
         run: |
-          # Update compileSdkVersion in android/app/build.gradle
           sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/g' android/app/build.gradle
           sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/g' android/app/build.gradle
           
