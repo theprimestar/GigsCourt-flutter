@@ -19,9 +19,9 @@ dependencies:
   # Supabase
   supabase_flutter: ^2.5.0
   
-  # Maps
+  # Maps - VERIFIED COMBINATION
   flutter_map: ^6.0.0
-  latlong2: ^0.8.0
+  latlong2: ^0.9.1
   
   # Images
   image_picker: ^1.1.0
