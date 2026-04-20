@@ -1,0 +1,76 @@
+name: Build iOS IPA (Unsigned)
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build flavor (dev/prod)'
+        required: false
+        default: 'dev'
+
+jobs:
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Make prepare script executable
+        run: chmod +x scripts/ios_prepare.sh
+
+      - name: Prepare iOS project
+        run: ./scripts/ios_prepare.sh
+
+      - name: Install FlutterFire CLI
+        run: dart pub global activate flutterfire_cli
+
+      - name: Generate firebase_options.dart
+        run: |
+          echo "import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;" > lib/firebase_options.dart
+          echo "" >> lib/firebase_options.dart
+          echo "class DefaultFirebaseOptions {" >> lib/firebase_options.dart
+          echo "  static FirebaseOptions get currentPlatform {" >> lib/firebase_options.dart
+          echo "    return const FirebaseOptions(" >> lib/firebase_options.dart
+          echo "      apiKey: 'AIzaSyAOVhUZ3cFzrN9YiLdKL2bnW8dKKAt8gVQ'," >> lib/firebase_options.dart
+          echo "      authDomain: 'gigscourt2.firebaseapp.com'," >> lib/firebase_options.dart
+          echo "      projectId: 'gigscourt2'," >> lib/firebase_options.dart
+          echo "      storageBucket: 'gigscourt2.appspot.com'," >> lib/firebase_options.dart
+          echo "      messagingSenderId: '505136313803'," >> lib/firebase_options.dart
+          echo "      appId: '1:505136313803:ios:36d02056936ff71b23324e'," >> lib/firebase_options.dart
+          echo "      iosBundleId: 'com.gigscourt.app'," >> lib/firebase_options.dart
+          echo "    );" >> lib/firebase_options.dart
+          echo "  }" >> lib/firebase_options.dart
+          echo "}" >> lib/firebase_options.dart
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build unsigned iOS IPA
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r gigscourt-unsigned.ipa Payload/
+          mkdir -p output
+          mv gigscourt-unsigned.ipa output/
+
+      - name: Upload IPA as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gigscourt-ios-unsigned
+          path: output/gigscourt-unsigned.ipa
+          retention-days: 7
+
+      - name: Build summary
+        run: |
+          echo "✅ iOS IPA built successfully"
+          echo "📱 File: gigscourt-unsigned.ipa"
+          echo "📍 Download from the Artifacts section below"
