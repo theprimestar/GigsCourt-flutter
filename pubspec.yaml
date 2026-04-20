@@ -10,18 +10,15 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Firebase
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
+  # Firebase - Updated to Xcode 16.4 compatible versions
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.4.0
   
   # Supabase
-  supabase_flutter: ^2.3.0
-  
-  # ImageKit (commented until we implement image features)
-  # imagekit: ^1.0.0
+  supabase_flutter: ^2.8.1
   
   # Utilities
-  intl: ^0.18.0
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
