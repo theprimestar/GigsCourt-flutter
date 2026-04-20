@@ -1,0 +1,91 @@
+name: Build Android APK (Unsigned)
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build flavor (dev/prod)'
+        required: false
+        default: 'dev'
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install FlutterFire CLI
+        run: dart pub global activate flutterfire_cli
+
+      - name: Create Firebase options file
+        env:
+          FIREBASE_PROJECT_ID: gigscourt2
+          FIREBASE_ANDROID_APP_ID: 1:505136313803:android:10df32bdfe17a2f523324e
+          FIREBASE_IOS_APP_ID: 1:505136313803:ios:36d02056936ff71b23324e
+          FIREBASE_IOS_BUNDLE_ID: com.gigscourt.app
+        run: |
+          cat > firebase.json << EOF
+          {
+            "flutter": {
+              "platforms": {
+                "android": {
+                  "projectId": "$FIREBASE_PROJECT_ID",
+                  "appId": "$FIREBASE_ANDROID_APP_ID"
+                },
+                "ios": {
+                  "projectId": "$FIREBASE_PROJECT_ID",
+                  "appId": "$FIREBASE_IOS_APP_ID",
+                  "bundleId": "$FIREBASE_IOS_BUNDLE_ID"
+                }
+              }
+            }
+          }
+          EOF
+
+      - name: Generate firebase_options.dart
+        run: |
+          echo "import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;" > lib/firebase_options.dart
+          echo "" >> lib/firebase_options.dart
+          echo "class DefaultFirebaseOptions {" >> lib/firebase_options.dart
+          echo "  static FirebaseOptions get currentPlatform {" >> lib/firebase_options.dart
+          echo "    return const FirebaseOptions(" >> lib/firebase_options.dart
+          echo "      apiKey: 'AIzaSyAOVhUZ3cFzrN9YiLdKL2bnW8dKKAt8gVQ'," >> lib/firebase_options.dart
+          echo "      authDomain: 'gigscourt2.firebaseapp.com'," >> lib/firebase_options.dart
+          echo "      projectId: 'gigscourt2'," >> lib/firebase_options.dart
+          echo "      storageBucket: 'gigscourt2.appspot.com'," >> lib/firebase_options.dart
+          echo "      messagingSenderId: '505136313803'," >> lib/firebase_options.dart
+          echo "      appId: '1:505136313803:android:10df32bdfe17a2f523324e'," >> lib/firebase_options.dart
+          echo "    );" >> lib/firebase_options.dart
+          echo "  }" >> lib/firebase_options.dart
+          echo "}" >> lib/firebase_options.dart
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build unsigned APK
+        run: |
+          flutter build apk --release --no-shrink
+          mkdir -p output
+          cp build/app/outputs/flutter-apk/app-release.apk output/gigscourt-unsigned.apk
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gigscourt-android-unsigned
+          path: output/gigscourt-unsigned.apk
+          retention-days: 7
+
+      - name: Build summary
+        run: |
+          echo "✅ Android APK built successfully"
+          echo "📱 File: gigscourt-unsigned.apk"
+          echo "📍 Download from the Artifacts section below"
